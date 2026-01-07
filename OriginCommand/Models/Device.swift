@@ -87,6 +87,7 @@ struct DeviceStatus: Equatable, Sendable {
 final class Device: Identifiable, Sendable {
     let id: UUID
     let name: String
+    let model: String  // Device model (e.g., "WiiM Pro", "Bluesound Node")
     let ipAddress: String
     let port: Int
     let type: DeviceType
@@ -98,6 +99,7 @@ final class Device: Identifiable, Sendable {
     init(
         id: UUID = UUID(),
         name: String,
+        model: String = "",
         ipAddress: String,
         port: Int = 80,
         type: DeviceType,
@@ -106,6 +108,7 @@ final class Device: Identifiable, Sendable {
     ) {
         self.id = id
         self.name = name
+        self.model = model.isEmpty ? type.rawValue : model
         self.ipAddress = ipAddress
         self.port = port
         self.type = type

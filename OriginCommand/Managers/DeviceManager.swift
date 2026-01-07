@@ -207,30 +207,30 @@ final class DeviceManager {
     // MARK: - Mock Devices (for simulator)
     
     private func addMockDevices() {
-        let zones: [(name: String, type: DeviceType)] = [
+        let zones: [(name: String, model: String, type: DeviceType)] = [
             // Conference Room
-            ("Conference Room: MOS", .wiim),
-            ("Conference Room: 602", .wiim),
-            ("Conference Room: 802 Sub", .wiim),
-            ("Conference Room: 803", .wiim),
+            ("Conference Room: MOS", "WiiM Pro", .wiim),
+            ("Conference Room: 602", "WiiM Amp", .wiim),
+            ("Conference Room: 802 Sub", "WiiM Pro", .wiim),
+            ("Conference Room: 803", "WiiM Amp", .wiim),
             // Lobby
-            ("Lobby: PS80", .wiim),
-            ("Lobby: Pendants", .wiim),
+            ("Lobby: PS80", "WiiM Pro", .wiim),
+            ("Lobby: Pendants", "WiiM Amp", .wiim),
             // Showroom
-            ("Showroom: Pendants", .wiim),
-            ("Showroom: P10Sub (x4)", .wiim),
-            ("Showroom: Pro Pendants", .wiim),
+            ("Showroom: Pendants", "WiiM Pro", .wiim),
+            ("Showroom: P10Sub (x4)", "WiiM Amp", .wiim),
+            ("Showroom: Pro Pendants", "WiiM Pro", .wiim),
             // Planter Wall
-            ("Planter Wall: ASM63", .bluesound),
-            ("Planter Wall: ALSB106", .bluesound),
-            ("Planter Wall: ALSB85", .bluesound),
-            ("Planter Wall: ALSB64", .bluesound),
-            ("Planter Wall: LSH80", .bluesound),
-            ("Planter Wall: LSH60", .bluesound),
-            ("Planter Wall: LSH40", .bluesound),
+            ("Planter Wall: ASM63", "Node 2i", .bluesound),
+            ("Planter Wall: ALSB106", "Powernode", .bluesound),
+            ("Planter Wall: ALSB85", "Node 2i", .bluesound),
+            ("Planter Wall: ALSB64", "Powernode", .bluesound),
+            ("Planter Wall: LSH80", "Node 2i", .bluesound),
+            ("Planter Wall: LSH60", "Powernode", .bluesound),
+            ("Planter Wall: LSH40", "Node 2i", .bluesound),
             // Other
-            ("Hallway: Planter", .wiim),
-            ("Front Yard: Bollards", .wiim)
+            ("Hallway: Planter", "WiiM Pro", .wiim),
+            ("Front Yard: Bollards", "WiiM Amp", .wiim)
         ]
         
         for (index, zone) in zones.enumerated() {
@@ -260,6 +260,7 @@ final class DeviceManager {
             
             let device = Device(
                 name: zone.name,
+                model: zone.model,
                 ipAddress: "192.168.1.\(100 + index)",
                 type: zone.type,
                 status: status
