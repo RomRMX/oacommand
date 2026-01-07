@@ -39,34 +39,14 @@ struct DeviceCardView: View {
                 
                 Spacer()
                 
-                // Model Badge (Clickable)
-                Button {
-                    editedIP = device.ipAddress
-                    showingIPEditor = true
-                } label: {
-                    Text(device.model)
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.6))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Capsule())
-                }
-                .popover(isPresented: $showingIPEditor) {
-                    IPEditorView(
-                        deviceName: device.name,
-                        model: device.model,
-                        currentIP: device.ipAddress,
-                        editedIP: $editedIP,
-                        onSave: {
-                            deviceManager.updateIPAddress(editedIP, for: device)
-                            showingIPEditor = false
-                        },
-                        onDismiss: {
-                            showingIPEditor = false
-                        }
-                    )
-                }
+                // Model Badge (Static)
+                Text(device.model)
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Capsule())
             }
             
             // Row 2: Controls, Info, Shortcuts
@@ -101,15 +81,25 @@ struct DeviceCardView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
-                // Streaming Shortcuts (Right) - Compact
-                HStack(spacing: 6) {
-                    // Spotify
-                    shortcutButton(icon: "waveform", color: .green, url: "spotify://")
-                    // Apple Music
-                    shortcutButton(icon: "music.note", color: .red, url: "music://")
-                    // Tidal (used 'waveform.path' as proxy)
-                    shortcutButton(icon: "waveform.path", color: .white, url: "tidal://")
+                // IP Address (Right)
+                Button {
+                    editedIP = device.ipAddress
+                    showingIPEditor = true
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "network")
+                            .font(.system(size: 8))
+                            .foregroundStyle(.white.opacity(0.3))
+                        Text(device.ipAddress)
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.05))
+                    .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
             
             // Row 3: Volume
@@ -177,21 +167,7 @@ struct DeviceCardView: View {
             .clipShape(Circle())
     }
     
-    private func shortcutButton(icon: String, color: Color, url: String) -> some View {
-        Button {
-            if let url = URL(string: url) {
-                openURL(url)
-            }
-        } label: {
-            Image(systemName: icon)
-                .font(.system(size: 10))
-                .foregroundStyle(color)
-                .frame(width: 22, height: 22)
-                .background(color.opacity(0.15))
-                .clipShape(Circle())
-                .overlay(Circle().strokeBorder(color.opacity(0.3), lineWidth: 0.5))
-        }
-    }
+
 }
 
 /// IP Address editor popover
