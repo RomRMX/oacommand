@@ -88,7 +88,7 @@ final class Device: Identifiable, Sendable {
     let id: UUID
     let name: String
     let model: String  // Device model (e.g., "WiiM Pro", "Bluesound Node")
-    let ipAddress: String
+    var ipAddress: String
     let port: Int
     let type: DeviceType
     

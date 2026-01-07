@@ -204,6 +204,14 @@ final class DeviceManager {
         }
     }
     
+    /// Update IP address manually
+    func updateIPAddress(_ ip: String, for device: Device) {
+        // Simple validation
+        guard !ip.isEmpty else { return }
+        device.ipAddress = ip
+        print("[DeviceManager] Updated IP for \(device.name) to \(ip)")
+    }
+    
     // MARK: - Mock Devices (for simulator)
     
     private func addMockDevices() {

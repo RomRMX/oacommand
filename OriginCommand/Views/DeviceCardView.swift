@@ -62,7 +62,7 @@ struct DeviceCardView: View {
                         currentIP: device.ipAddress,
                         editedIP: $editedIP,
                         onSave: {
-                            // TODO: Save new IP to device
+                            deviceManager.updateIPAddress(editedIP, for: device)
                             showingIPEditor = false
                         },
                         onDismiss: {
