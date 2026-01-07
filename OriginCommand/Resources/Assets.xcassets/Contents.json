@@ -1,0 +1,28 @@
+{
+  "contents" : {
+    "info" : {
+      "author" : "xcode",
+      "version" : 1
+    },
+    "colors" : [
+      {
+        "filename" : "AccentColor.colorset",
+        "idiom" : "universal"
+      },
+      {
+        "filename" : "WiiMGreen.colorset",
+        "idiom" : "universal"
+      },
+      {
+        "filename" : "BluesoundBlue.colorset",
+        "idiom" : "universal"
+      }
+    ],
+    "images" : [
+      {
+        "filename" : "AppIcon.appiconset",
+        "idiom" : "universal"
+      }
+    ]
+  }
+}
