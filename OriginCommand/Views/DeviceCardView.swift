@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Glassmorphism device control card with full transport controls
+/// Ultra-compact glassmorphism device card - fits 18 on one screen
 struct DeviceCardView: View {
     @Environment(DeviceManager.self) private var deviceManager
     let device: Device
@@ -18,203 +18,147 @@ struct DeviceCardView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Row 1: Device Name + Status Indicator
-            HStack(alignment: .center) {
+        VStack(spacing: 3) {
+            // Row 1: Device Name + Track Info + Status
+            HStack(spacing: 4) {
+                // Status dot
+                Circle()
+                    .fill(device.isOnline ? accentColor : Color.red)
+                    .frame(width: 4, height: 4)
+                
+                // Device name
                 Text(device.name)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 
                 Spacer()
                 
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(device.isOnline ? accentColor : Color.red)
-                        .frame(width: 5, height: 5)
-                    
-                    if device.status.playbackState == .playing {
-                        Image(systemName: "waveform")
-                            .font(.system(size: 9))
-                            .foregroundStyle(accentColor)
-                    }
+                // Track info (compact)
+                if let title = device.status.title, !title.isEmpty {
+                    Text(title)
+                        .font(.system(size: 8))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .lineLimit(1)
+                        .frame(maxWidth: 80)
+                }
+                
+                // Playing indicator
+                if device.status.playbackState == .playing {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 8))
+                        .foregroundStyle(accentColor)
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
             
-            // Row 2: Artist & Track Name (2 lines)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(device.status.title ?? "No Track")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineLimit(1)
-                
-                Text(device.status.artist ?? "Unknown Artist")
-                    .font(.system(size: 9))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 10)
-            .padding(.bottom, 6)
-            
-            // Row 3: Transport Controls
-            HStack(spacing: 6) {
+            // Row 2: Transport + Volume (all in one row)
+            HStack(spacing: 4) {
                 // Rewind
                 Button {
-                    // Rewind action - seek backward
                 } label: {
                     Image(systemName: "backward.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.white.opacity(0.8))
-                        .frame(width: 26, height: 26)
-                        .background(Color.white.opacity(0.1))
+                        .font(.system(size: 8))
+                        .foregroundStyle(.white.opacity(0.7))
+                        .frame(width: 20, height: 20)
+                        .background(Color.white.opacity(0.08))
                         .clipShape(Circle())
                 }
                 
                 // Play/Pause
                 Button {
-                    Task {
-                        await deviceManager.togglePlayPause(for: device)
-                    }
+                    Task { await deviceManager.togglePlayPause(for: device) }
                 } label: {
                     Image(systemName: device.status.playbackState == .playing ? "pause.fill" : "play.fill")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 10))
                         .foregroundStyle(.white)
-                        .frame(width: 32, height: 32)
-                        .background(accentColor.opacity(0.3))
+                        .frame(width: 24, height: 24)
+                        .background(accentColor.opacity(0.25))
                         .clipShape(Circle())
-                        .overlay {
-                            Circle()
-                                .strokeBorder(accentColor.opacity(0.6), lineWidth: 1)
-                        }
+                        .overlay { Circle().strokeBorder(accentColor.opacity(0.5), lineWidth: 0.5) }
                 }
                 
                 // Forward
                 Button {
-                    // Forward action - skip next
                 } label: {
                     Image(systemName: "forward.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.white.opacity(0.8))
-                        .frame(width: 26, height: 26)
-                        .background(Color.white.opacity(0.1))
+                        .font(.system(size: 8))
+                        .foregroundStyle(.white.opacity(0.7))
+                        .frame(width: 20, height: 20)
+                        .background(Color.white.opacity(0.08))
                         .clipShape(Circle())
                 }
                 
                 // Mute
                 Button {
-                    Task {
-                        await deviceManager.toggleMute(for: device)
-                    }
+                    Task { await deviceManager.toggleMute(for: device) }
                 } label: {
-                    Image(systemName: device.status.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                        .font(.system(size: 9))
-                        .foregroundStyle(device.status.isMuted ? .red : .white.opacity(0.7))
-                        .frame(width: 26, height: 26)
-                        .background(device.status.isMuted ? Color.red.opacity(0.2) : Color.white.opacity(0.1))
+                    Image(systemName: device.status.isMuted ? "speaker.slash.fill" : "speaker.fill")
+                        .font(.system(size: 7))
+                        .foregroundStyle(device.status.isMuted ? .red : .white.opacity(0.6))
+                        .frame(width: 18, height: 18)
+                        .background(device.status.isMuted ? Color.red.opacity(0.15) : Color.white.opacity(0.08))
                         .clipShape(Circle())
                 }
                 
-                Spacer()
-                
-                // Volume Slider
-                HStack(spacing: 4) {
-                    Slider(
-                        value: $localVolume,
-                        in: 0...100,
-                        step: 1
-                    ) { editing in
-                        isDraggingVolume = editing
-                        if !editing {
-                            Task {
-                                await deviceManager.setVolume(Int(localVolume), for: device)
-                            }
-                        }
-                    }
-                    .tint(accentColor)
-                    
-                    Text("\(Int(isDraggingVolume ? localVolume : Double(device.status.volume)))%")
-                        .font(.system(size: 9, weight: .medium).monospacedDigit())
-                        .foregroundStyle(.white.opacity(0.6))
-                        .frame(width: 26, alignment: .trailing)
+                // Volume Slider - fills remaining space
+                Slider(value: $localVolume, in: 0...100, step: 1) { editing in
+                    isDraggingVolume = editing
+                    if !editing { Task { await deviceManager.setVolume(Int(localVolume), for: device) } }
                 }
+                .tint(accentColor)
+                
+                Text("\(Int(isDraggingVolume ? localVolume : Double(device.status.volume)))%")
+                    .font(.system(size: 8, weight: .medium).monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(width: 22)
             }
-            .padding(.horizontal, 10)
-            .padding(.bottom, 8)
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
         .background {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .background {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [accentColor.opacity(0.12), accentColor.opacity(0.04)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(LinearGradient(
+                            colors: [accentColor.opacity(0.1), accentColor.opacity(0.03)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
                 }
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
-                        colors: [.white.opacity(0.25), .white.opacity(0.08), accentColor.opacity(0.2)],
+                        colors: [.white.opacity(0.2), .white.opacity(0.05), accentColor.opacity(0.15)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 1
+                    lineWidth: 0.5
                 )
         }
-        .shadow(color: accentColor.opacity(0.15), radius: 6, x: 0, y: 3)
-        .onAppear {
-            localVolume = Double(device.status.volume)
-        }
+        .onAppear { localVolume = Double(device.status.volume) }
         .onChange(of: device.status.volume) { _, newValue in
-            if !isDraggingVolume {
-                localVolume = Double(newValue)
-            }
+            if !isDraggingVolume { localVolume = Double(newValue) }
         }
     }
 }
 
 #Preview {
-    let manager = DeviceManager()
-    
-    return ZStack {
-        LinearGradient(
-            colors: [Color(red: 0.08, green: 0.08, blue: 0.12), Color.black],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
-        
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-            DeviceCardView(device: Device(
-                name: "Lobby: PS80",
-                ipAddress: "192.168.1.100",
-                type: .wiim,
-                status: DeviceStatus(
-                    source: .spotify,
-                    playbackState: .playing,
-                    artist: "Eagles",
-                    title: "Hotel California",
-                    volume: 65,
-                    isMuted: false
-                )
-            ))
-            DeviceCardView(device: Device(
-                name: "Conference Room: MOS",
-                ipAddress: "192.168.1.101",
-                type: .bluesound,
-                status: .idle
-            ))
+    ZStack {
+        Color.black.ignoresSafeArea()
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
+            ForEach(0..<4) { i in
+                DeviceCardView(device: Device(
+                    name: "Zone \(i): Speaker",
+                    ipAddress: "192.168.1.\(100 + i)",
+                    type: i % 2 == 0 ? .wiim : .bluesound,
+                    status: .idle
+                ))
+            }
         }
         .padding()
     }
-    .environment(manager)
+    .environment(DeviceManager())
 }
