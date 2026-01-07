@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Device card with detailed layout - fits 20 on screen (4 cols x 5 rows)
+/// Efficient 2-column wide card with streaming shortcuts
 struct DeviceCardView: View {
     @Environment(DeviceManager.self) private var deviceManager
+    @Environment(\.openURL) private var openURL
     let device: Device
     
     @State private var localVolume: Double = 50
@@ -20,124 +21,119 @@ struct DeviceCardView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // 1. Header: Airplay Name (Title)
-            HStack(alignment: .top) {
-                Text(device.name)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(spacing: 8) {
+            // Row 1: Header - Device Name & Model
+            HStack(alignment: .center) {
+                // Status & Name
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(device.isOnline ? accentColor : Color.red)
+                        .frame(width: 6, height: 6)
+                        .shadow(color: device.isOnline ? accentColor.opacity(0.5) : .clear, radius: 2)
+                    
+                    Text(device.name)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                }
                 
                 Spacer()
                 
-                // Status Indicator
-                Circle()
-                    .fill(device.isOnline ? accentColor : Color.red)
-                    .frame(width: 6, height: 6)
-                    .shadow(color: device.isOnline ? accentColor.opacity(0.5) : .clear, radius: 2)
-                    .padding(.top, 4)
-            }
-            
-            // 2. Metadata: Song & Artist
-            VStack(alignment: .leading, spacing: 2) {
-                Text(device.status.title ?? "No Track")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineLimit(1)
-                
-                Text(device.status.artist ?? "Unknown Artist")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1)
-            }
-            
-            Spacer(minLength: 4)
-            
-            // 3. Controls Row
-            HStack(spacing: 0) {
-                // Rewind
-                Button { } label: { controlButton(icon: "backward.fill", size: 12) }
-                    .frame(maxWidth: .infinity)
-                
-                // Play/Pause
+                // Model Badge (Clickable)
                 Button {
-                    Task { await deviceManager.togglePlayPause(for: device) }
+                    editedIP = device.ipAddress
+                    showingIPEditor = true
                 } label: {
-                    Image(systemName: device.status.playbackState == .playing ? "pause.fill" : "play.fill")
-                        .font(.system(size: 16)) // Slightly larger
-                        .foregroundStyle(.white)
-                        .frame(width: 32, height: 32)
-                        .background(accentColor.opacity(0.2))
-                        .clipShape(Circle())
-                        .overlay(Circle().strokeBorder(accentColor.opacity(0.4), lineWidth: 1))
+                    Text(device.model)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Capsule())
                 }
-                .frame(maxWidth: .infinity)
+                .popover(isPresented: $showingIPEditor) {
+                    IPEditorView(
+                        deviceName: device.name,
+                        model: device.model,
+                        currentIP: device.ipAddress,
+                        editedIP: $editedIP,
+                        onSave: {
+                            deviceManager.updateIPAddress(editedIP, for: device)
+                            showingIPEditor = false
+                        },
+                        onDismiss: {
+                            showingIPEditor = false
+                        }
+                    )
+                }
+            }
+            
+            // Row 2: Controls, Info, Shortcuts
+            HStack(alignment: .center, spacing: 12) {
+                // Playback Controls
+                HStack(spacing: 2) {
+                    Button { } label: { controlButton(icon: "backward.fill", size: 10) }
+                    
+                    Button {
+                        Task { await deviceManager.togglePlayPause(for: device) }
+                    } label: {
+                        Image(systemName: device.status.playbackState == .playing ? "pause.circle.fill" : "play.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.white)
+                            .shadow(radius: 2)
+                    }
+                    
+                    Button { } label: { controlButton(icon: "forward.fill", size: 10) }
+                }
                 
-                // Forward
-                Button { } label: { controlButton(icon: "forward.fill", size: 12) }
-                    .frame(maxWidth: .infinity)
+                // Track Info (Middle)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(device.status.title ?? "No Track")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    
+                    Text(device.status.artist ?? "Unknown Artist")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 
-                // Mute
+                // Streaming Shortcuts (Right) - Compact
+                HStack(spacing: 6) {
+                    // Spotify
+                    shortcutButton(icon: "waveform", color: .green, url: "spotify://")
+                    // Apple Music
+                    shortcutButton(icon: "music.note", color: .red, url: "music://")
+                    // Tidal (used 'waveform.path' as proxy)
+                    shortcutButton(icon: "waveform.path", color: .white, url: "tidal://")
+                }
+            }
+            
+            // Row 3: Volume
+            HStack(spacing: 8) {
                 Button {
                     Task { await deviceManager.toggleMute(for: device) }
                 } label: {
                     Image(systemName: device.status.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                         .font(.system(size: 10))
-                        .foregroundStyle(device.status.isMuted ? .red : .white.opacity(0.7))
-                        .frame(width: 28, height: 28)
-                        .background(device.status.isMuted ? Color.red.opacity(0.15) : Color.white.opacity(0.1))
-                        .clipShape(Circle())
+                        .foregroundStyle(device.status.isMuted ? .red : .white.opacity(0.6))
+                        .frame(width: 20, alignment: .center)
                 }
-                .frame(maxWidth: .infinity)
-            }
-            
-            // 4. Volume Row
-            HStack(spacing: 8) {
-                Image(systemName: "speaker.fill")
-                    .font(.system(size: 8))
-                    .foregroundStyle(.white.opacity(0.3))
                 
                 Slider(value: $localVolume, in: 0...100, step: 1) { editing in
                     isDraggingVolume = editing
                     if !editing { Task { await deviceManager.setVolume(Int(localVolume), for: device) } }
                 }
                 .tint(accentColor)
-                .frame(height: 20)
+                .frame(height: 12)
                 
                 Text("\(Int(isDraggingVolume ? localVolume : Double(device.status.volume)))%")
-                    .font(.system(size: 9, weight: .medium).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.6))
-                    .frame(width: 24, alignment: .trailing)
-            }
-            
-            // 5. Footer: Model Name
-            Button {
-                editedIP = device.ipAddress
-                showingIPEditor = true
-            } label: {
-                Text(device.model)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.white.opacity(0.05))
-                    .clipShape(Capsule())
-            }
-            .popover(isPresented: $showingIPEditor) {
-                IPEditorView(
-                    deviceName: device.name,
-                    model: device.model,
-                    currentIP: device.ipAddress,
-                    editedIP: $editedIP,
-                    onSave: {
-                        deviceManager.updateIPAddress(editedIP, for: device)
-                        showingIPEditor = false
-                    },
-                    onDismiss: {
-                        showingIPEditor = false
-                    }
-                )
+                    .font(.system(size: 10, weight: .medium).monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(width: 28, alignment: .trailing)
             }
         }
         .padding(10)
@@ -157,7 +153,7 @@ struct DeviceCardView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
-                        colors: [.white.opacity(0.15), .white.opacity(0.05), accentColor.opacity(0.1)],
+                        colors: [.white.opacity(0.1), .white.opacity(0.02), accentColor.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -170,14 +166,31 @@ struct DeviceCardView: View {
         }
     }
     
-    // Helper helper for standard transport controls
+    // Components
+    
     private func controlButton(icon: String, size: CGFloat) -> some View {
         Image(systemName: icon)
             .font(.system(size: size))
-            .foregroundStyle(.white.opacity(0.8))
-            .frame(width: 28, height: 28)
-            .background(Color.white.opacity(0.08))
+            .foregroundStyle(.white.opacity(0.7))
+            .frame(width: 24, height: 24)
+            .background(Color.white.opacity(0.05))
             .clipShape(Circle())
+    }
+    
+    private func shortcutButton(icon: String, color: Color, url: String) -> some View {
+        Button {
+            if let url = URL(string: url) {
+                openURL(url)
+            }
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundStyle(color)
+                .frame(width: 22, height: 22)
+                .background(color.opacity(0.15))
+                .clipShape(Circle())
+                .overlay(Circle().strokeBorder(color.opacity(0.3), lineWidth: 0.5))
+        }
     }
 }
 
@@ -192,80 +205,38 @@ struct IPEditorView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
+            // Header with simple close
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(deviceName)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text(model)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
+                Text(deviceName)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
                 Spacer()
-                Button {
-                    onDismiss()
-                } label: {
+                Button(action: onDismiss) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
             }
+            Text(model).font(.caption).foregroundStyle(.white.opacity(0.5))
             
             Divider().background(.white.opacity(0.2))
             
-            // IP Address field
-            VStack(alignment: .leading, spacing: 4) {
-                Text("IP Address")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.5))
-                
-                TextField("xxx.xxx.xxx.xxx", text: $editedIP)
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .keyboardType(.decimalPad)
-            }
+            TextField("IP Address", text: $editedIP)
+                .font(.system(.body, design: .monospaced))
+                .padding(8)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(6)
             
-            // Save button
-            Button {
-                onSave()
-            } label: {
-                Text("Save")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(Color.green)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
+            Button("Save Update", action: onSave)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.black)
+                .frame(maxWidth: .infinity)
+                .padding(10)
+                .background(Color.green)
+                .cornerRadius(8)
         }
-        .padding(16)
-        .frame(width: 260)
-        .background(Color(red: 0.1, green: 0.1, blue: 0.14))
+        .padding()
+        .frame(width: 240)
+        .background(Color(white: 0.15))
         .preferredColorScheme(.dark)
     }
-}
-
-#Preview {
-    ZStack {
-        Color.black.ignoresSafeArea()
-        ScrollView {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
-                ForEach(0..<20) { i in
-                    DeviceCardView(device: Device(
-                        name: "Conference Room \(i)",
-                        model: "WiiM Pro",
-                        ipAddress: "192.168.1.\(100+i)",
-                        type: i % 2 == 0 ? .wiim : .bluesound,
-                         status: DeviceStatus(source: .spotify, playbackState: .playing, artist: "The Eagles", title: "Hotel California - 2013 Remaster", volume: 65, isMuted: false)
-                    ))
-                }
-            }
-            .padding()
-        }
-    }
-    .environment(DeviceManager())
 }
