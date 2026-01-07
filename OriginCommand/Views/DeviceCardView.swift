@@ -128,11 +128,6 @@ struct DeviceCardView: View {
                 }
                 .tint(accentColor)
                 .frame(height: 12)
-                
-                Text("\(Int(isDraggingVolume ? localVolume : Double(device.status.volume)))%")
-                    .font(.system(size: 10, weight: .medium).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(width: 28, alignment: .trailing)
             }
         }
         .padding(10)
