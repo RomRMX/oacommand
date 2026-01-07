@@ -81,25 +81,34 @@ struct DeviceCardView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
-                // IP Address (Right)
-                Button {
-                    editedIP = device.ipAddress
-                    showingIPEditor = true
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "network")
-                            .font(.system(size: 8))
-                            .foregroundStyle(.white.opacity(0.3))
-                        Text(device.ipAddress)
-                            .font(.system(size: 9, weight: .medium, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.4))
+                // Source & IP (Right)
+                VStack(alignment: .trailing, spacing: 2) {
+                    // Streaming Source
+                    Text(device.status.source.name)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(accentColor.opacity(0.8))
+                        .lineLimit(1)
+                    
+                    // IP Address
+                    Button {
+                        editedIP = device.ipAddress
+                        showingIPEditor = true
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "network")
+                                .font(.system(size: 8))
+                                .foregroundStyle(.white.opacity(0.3))
+                            Text(device.ipAddress)
+                                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color.white.opacity(0.05))
+                        .clipShape(Capsule())
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Color.white.opacity(0.05))
-                    .clipShape(Capsule())
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             
             // Row 3: Volume
