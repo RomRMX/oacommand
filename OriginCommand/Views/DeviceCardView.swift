@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Ultra-compact glassmorphism device card with model display and IP editor
+/// Device card with detailed layout - fits 20 on screen (4 cols x 5 rows)
 struct DeviceCardView: View {
     @Environment(DeviceManager.self) private var deviceManager
     let device: Device
@@ -20,144 +20,144 @@ struct DeviceCardView: View {
     }
     
     var body: some View {
-        VStack(spacing: 3) {
-            // Row 1: Device Name + Model (clickable) + Status
-            HStack(spacing: 4) {
-                // Status dot
-                Circle()
-                    .fill(device.isOnline ? accentColor : Color.red)
-                    .frame(width: 4, height: 4)
-                
-                // Device name
+        VStack(alignment: .leading, spacing: 6) {
+            // 1. Header: Airplay Name (Title)
+            HStack(alignment: .top) {
                 Text(device.name)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.white)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 
                 Spacer()
                 
-                // Device Model - Clickable for IP settings
-                Button {
-                    editedIP = device.ipAddress
-                    showingIPEditor = true
-                } label: {
-                    HStack(spacing: 3) {
-                        Text(device.model)
-                            .font(.system(size: 8, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.5))
-                        
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 7))
-                            .foregroundStyle(.white.opacity(0.3))
-                    }
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(Color.white.opacity(0.05))
-                    .clipShape(Capsule())
-                }
-                .popover(isPresented: $showingIPEditor) {
-                    IPEditorView(
-                        deviceName: device.name,
-                        model: device.model,
-                        currentIP: device.ipAddress,
-                        editedIP: $editedIP,
-                        onSave: {
-                            deviceManager.updateIPAddress(editedIP, for: device)
-                            showingIPEditor = false
-                        },
-                        onDismiss: {
-                            showingIPEditor = false
-                        }
-                    )
-                }
-                
-                // Playing indicator
-                if device.status.playbackState == .playing {
-                    Image(systemName: "waveform")
-                        .font(.system(size: 8))
-                        .foregroundStyle(accentColor)
-                }
+                // Status Indicator
+                Circle()
+                    .fill(device.isOnline ? accentColor : Color.red)
+                    .frame(width: 6, height: 6)
+                    .shadow(color: device.isOnline ? accentColor.opacity(0.5) : .clear, radius: 2)
+                    .padding(.top, 4)
             }
             
-            // Row 2: Transport + Volume
-            HStack(spacing: 4) {
+            // 2. Metadata: Song & Artist
+            VStack(alignment: .leading, spacing: 2) {
+                Text(device.status.title ?? "No Track")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineLimit(1)
+                
+                Text(device.status.artist ?? "Unknown Artist")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1)
+            }
+            
+            Spacer(minLength: 4)
+            
+            // 3. Controls Row
+            HStack(spacing: 0) {
                 // Rewind
-                Button { } label: {
-                    Image(systemName: "backward.fill")
-                        .font(.system(size: 8))
-                        .foregroundStyle(.white.opacity(0.7))
-                        .frame(width: 20, height: 20)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(Circle())
-                }
+                Button { } label: { controlButton(icon: "backward.fill", size: 12) }
+                    .frame(maxWidth: .infinity)
                 
                 // Play/Pause
                 Button {
                     Task { await deviceManager.togglePlayPause(for: device) }
                 } label: {
                     Image(systemName: device.status.playbackState == .playing ? "pause.fill" : "play.fill")
-                        .font(.system(size: 10))
+                        .font(.system(size: 16)) // Slightly larger
                         .foregroundStyle(.white)
-                        .frame(width: 24, height: 24)
-                        .background(accentColor.opacity(0.25))
+                        .frame(width: 32, height: 32)
+                        .background(accentColor.opacity(0.2))
                         .clipShape(Circle())
-                        .overlay { Circle().strokeBorder(accentColor.opacity(0.5), lineWidth: 0.5) }
+                        .overlay(Circle().strokeBorder(accentColor.opacity(0.4), lineWidth: 1))
                 }
+                .frame(maxWidth: .infinity)
                 
                 // Forward
-                Button { } label: {
-                    Image(systemName: "forward.fill")
-                        .font(.system(size: 8))
-                        .foregroundStyle(.white.opacity(0.7))
-                        .frame(width: 20, height: 20)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(Circle())
-                }
+                Button { } label: { controlButton(icon: "forward.fill", size: 12) }
+                    .frame(maxWidth: .infinity)
                 
                 // Mute
                 Button {
                     Task { await deviceManager.toggleMute(for: device) }
                 } label: {
-                    Image(systemName: device.status.isMuted ? "speaker.slash.fill" : "speaker.fill")
-                        .font(.system(size: 7))
-                        .foregroundStyle(device.status.isMuted ? .red : .white.opacity(0.6))
-                        .frame(width: 18, height: 18)
-                        .background(device.status.isMuted ? Color.red.opacity(0.15) : Color.white.opacity(0.08))
+                    Image(systemName: device.status.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(device.status.isMuted ? .red : .white.opacity(0.7))
+                        .frame(width: 28, height: 28)
+                        .background(device.status.isMuted ? Color.red.opacity(0.15) : Color.white.opacity(0.1))
                         .clipShape(Circle())
                 }
+                .frame(maxWidth: .infinity)
+            }
+            
+            // 4. Volume Row
+            HStack(spacing: 8) {
+                Image(systemName: "speaker.fill")
+                    .font(.system(size: 8))
+                    .foregroundStyle(.white.opacity(0.3))
                 
-                // Volume Slider
                 Slider(value: $localVolume, in: 0...100, step: 1) { editing in
                     isDraggingVolume = editing
                     if !editing { Task { await deviceManager.setVolume(Int(localVolume), for: device) } }
                 }
                 .tint(accentColor)
+                .frame(height: 20)
                 
                 Text("\(Int(isDraggingVolume ? localVolume : Double(device.status.volume)))%")
-                    .font(.system(size: 8, weight: .medium).monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(width: 22)
+                    .font(.system(size: 9, weight: .medium).monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.6))
+                    .frame(width: 24, alignment: .trailing)
+            }
+            
+            // 5. Footer: Model Name
+            Button {
+                editedIP = device.ipAddress
+                showingIPEditor = true
+            } label: {
+                Text(device.model)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.white.opacity(0.05))
+                    .clipShape(Capsule())
+            }
+            .popover(isPresented: $showingIPEditor) {
+                IPEditorView(
+                    deviceName: device.name,
+                    model: device.model,
+                    currentIP: device.ipAddress,
+                    editedIP: $editedIP,
+                    onSave: {
+                        deviceManager.updateIPAddress(editedIP, for: device)
+                        showingIPEditor = false
+                    },
+                    onDismiss: {
+                        showingIPEditor = false
+                    }
+                )
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(10)
         .background {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .background {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(LinearGradient(
-                            colors: [accentColor.opacity(0.1), accentColor.opacity(0.03)],
+                            colors: [accentColor.opacity(0.08), accentColor.opacity(0.02)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
                 }
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
-                        colors: [.white.opacity(0.2), .white.opacity(0.05), accentColor.opacity(0.15)],
+                        colors: [.white.opacity(0.15), .white.opacity(0.05), accentColor.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -168,6 +168,16 @@ struct DeviceCardView: View {
         .onChange(of: device.status.volume) { _, newValue in
             if !isDraggingVolume { localVolume = Double(newValue) }
         }
+    }
+    
+    // Helper helper for standard transport controls
+    private func controlButton(icon: String, size: CGFloat) -> some View {
+        Image(systemName: icon)
+            .font(.system(size: size))
+            .foregroundStyle(.white.opacity(0.8))
+            .frame(width: 28, height: 28)
+            .background(Color.white.opacity(0.08))
+            .clipShape(Circle())
     }
 }
 
@@ -242,23 +252,20 @@ struct IPEditorView: View {
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
-            DeviceCardView(device: Device(
-                name: "Lobby: PS80",
-                model: "WiiM Pro",
-                ipAddress: "192.168.1.100",
-                type: .wiim,
-                status: DeviceStatus(source: .spotify, playbackState: .playing, artist: "Eagles", title: "Hotel California", volume: 65, isMuted: false)
-            ))
-            DeviceCardView(device: Device(
-                name: "Planter Wall: ASM63",
-                model: "Node 2i",
-                ipAddress: "192.168.1.101",
-                type: .bluesound,
-                status: .idle
-            ))
+        ScrollView {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                ForEach(0..<20) { i in
+                    DeviceCardView(device: Device(
+                        name: "Conference Room \(i)",
+                        model: "WiiM Pro",
+                        ipAddress: "192.168.1.\(100+i)",
+                        type: i % 2 == 0 ? .wiim : .bluesound,
+                         status: DeviceStatus(source: .spotify, playbackState: .playing, artist: "The Eagles", title: "Hotel California - 2013 Remaster", volume: 65, isMuted: false)
+                    ))
+                }
+            }
+            .padding()
         }
-        .padding()
     }
     .environment(DeviceManager())
 }

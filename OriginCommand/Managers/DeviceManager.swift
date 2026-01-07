@@ -238,7 +238,10 @@ final class DeviceManager {
             ("Planter Wall: LSH40", "Node 2i", .bluesound),
             // Other
             ("Hallway: Planter", "WiiM Pro", .wiim),
-            ("Front Yard: Bollards", "WiiM Amp", .wiim)
+            ("Front Yard: Bollards", "WiiM Amp", .wiim),
+            // Extras to test 20-card grid
+            ("Patio: Guest", "WiiM Pro", .wiim),
+            ("Office: Main", "WiiM Amp", .wiim)
         ]
         
         for (index, zone) in zones.enumerated() {

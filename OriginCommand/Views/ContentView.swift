@@ -5,8 +5,10 @@ struct ContentView: View {
     @Environment(DeviceManager.self) private var deviceManager
     
     private let columns = [
-        GridItem(.flexible(), spacing: 6),
-        GridItem(.flexible(), spacing: 6)
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
     ]
     
     var body: some View {
@@ -63,17 +65,18 @@ struct ContentView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
+                    .padding(.top, 4)
                     
-                    // Device Grid - No scroll, fits on screen
-                    LazyVGrid(columns: columns, spacing: 6) {
-                        ForEach(deviceManager.sortedDevices) { device in
-                            DeviceCardView(device: device)
+                    // Device Grid with ScrollView
+                    ScrollView(showsIndicators: true) {
+                        LazyVGrid(columns: columns, spacing: 8) {
+                            ForEach(deviceManager.sortedDevices) { device in
+                                DeviceCardView(device: device)
+                            }
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 20)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
-                    
-                    Spacer(minLength: 0)
                 }
             }
         }
