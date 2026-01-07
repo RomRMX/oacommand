@@ -39,7 +39,7 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     // Compact Header
                     HStack {
-                        Text("OA Command")
+                        Text("OA Audio Zone Command Center")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                         
