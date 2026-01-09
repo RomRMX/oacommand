@@ -3,6 +3,7 @@ import SwiftUI
 /// Main dashboard - compact layout for all zones on one screen
 struct ContentView: View {
     @Environment(DeviceManager.self) private var deviceManager
+    @Environment(\.openURL) private var openURL
     
     private let columns = [
         GridItem(.flexible(), spacing: 8),
@@ -45,6 +46,14 @@ struct ContentView: View {
                         
                         Spacer()
                         
+                        // App Shortcuts
+                        HStack(spacing: 12) {
+                            appShortcutButton(name: "Apple Music", icon: "music.note", color: Color(red: 0.98, green: 0.17, blue: 0.22), url: "music://")
+                            appShortcutButton(name: "Spotify", icon: "waveform", color: Color(red: 0.11, green: 0.84, blue: 0.38), url: "spotify://")
+                            appShortcutButton(name: "Tidal", icon: "waveform.path", color: .white, url: "tidal://")
+                        }
+                        .padding(.trailing, 16)
+                        
                         Button {
                             Task { await deviceManager.refreshNetwork() }
                         } label: {
@@ -79,6 +88,28 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+    }
+    
+    // Helper for app shortcut buttons
+    private func appShortcutButton(name: String, icon: String, color: Color, url: String) -> some View {
+        Button {
+            if let url = URL(string: url) {
+                openURL(url)
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                Text(name)
+                    .font(.system(size: 10, weight: .semibold))
+            }
+            .foregroundStyle(color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(color.opacity(0.1))
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.3), lineWidth: 0.5))
+        }
     }
 }
 
