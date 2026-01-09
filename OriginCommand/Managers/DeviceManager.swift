@@ -212,6 +212,33 @@ final class DeviceManager {
         print("[DeviceManager] Updated IP for \(device.name) to \(ip)")
     }
     
+    /// Toggle grouping for a device (Mock implementation)
+    func toggleGrouping(for device: Device) {
+        if device.status.isGrouped {
+            // Ungroup
+            device.status.groupId = nil
+            device.status.isMaster = false
+            device.status.masterId = nil
+        } else {
+            // Group with another device of the same type if possible
+            if let master = devices.values.first(where: { $0.type == device.type && $0.id != device.id && $0.status.isMaster }) {
+                // Join existing group
+                device.status.groupId = master.status.groupId
+                device.status.isMaster = false
+                device.status.masterId = master.id.uuidString
+            } else if let potentialMaster = devices.values.first(where: { $0.type == device.type && $0.id != device.id && !$0.status.isGrouped }) {
+                // Create new group
+                let newGroupId = UUID().uuidString
+                potentialMaster.status.groupId = newGroupId
+                potentialMaster.status.isMaster = true
+                
+                device.status.groupId = newGroupId
+                device.status.isMaster = false
+                device.status.masterId = potentialMaster.id.uuidString
+            }
+        }
+    }
+    
     // MARK: - Mock Devices (for simulator)
     
     private func addMockDevices() {
@@ -276,6 +303,24 @@ final class DeviceManager {
                 type: zone.type,
                 status: status
             )
+            
+            // Apply some mock grouping
+            if zone.name.contains("Conference Room") && index < 3 {
+                device.status.groupId = "group-conference"
+                if index == 0 {
+                    device.status.isMaster = true
+                } else {
+                    device.status.masterId = "master-conference"
+                }
+            } else if zone.name.contains("Planter Wall") && index >= 10 && index <= 12 {
+                device.status.groupId = "group-planter"
+                if index == 10 {
+                    device.status.isMaster = true
+                } else {
+                    device.status.masterId = "master-planter"
+                }
+            }
+            
             devices[zone.name] = device
         }
     }

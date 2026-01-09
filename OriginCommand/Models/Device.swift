@@ -60,6 +60,13 @@ struct DeviceStatus: Equatable, Sendable {
     var volume: Int // 0-100
     var isMuted: Bool
     
+    // Grouping Info
+    var groupId: String?       // Unique ID of the group if active
+    var isMaster: Bool = false // True if this device is the master of the group
+    var masterId: String?     // ID of the master device if this is a slave
+    
+    var isGrouped: Bool { groupId != nil }
+    
     /// Formatted metadata string for display
     var metadataDisplay: String {
         if let artist = artist, let title = title, !artist.isEmpty, !title.isEmpty {
@@ -78,7 +85,10 @@ struct DeviceStatus: Equatable, Sendable {
         artist: nil,
         title: nil,
         volume: 50,
-        isMuted: false
+        isMuted: false,
+        groupId: nil,
+        isMaster: false,
+        masterId: nil
     )
 }
 

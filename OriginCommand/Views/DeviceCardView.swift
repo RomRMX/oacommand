@@ -31,13 +31,43 @@ struct DeviceCardView: View {
                         .frame(width: 6, height: 6)
                         .shadow(color: device.isOnline ? accentColor.opacity(0.5) : .clear, radius: 2)
                     
-                    Text(device.name)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(device.name)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        
+                        if device.status.isGrouped {
+                            HStack(spacing: 3) {
+                                Image(systemName: "link")
+                                    .font(.system(size: 8))
+                                Text(device.status.isMaster ? "Group Master" : "Linked Device")
+                                    .font(.system(size: 8, weight: .medium))
+                            }
+                            .foregroundStyle(accentColor.opacity(0.9))
+                        }
+                    }
                 }
                 
                 Spacer()
+                
+                // Group Toggle button
+                Button {
+                    deviceManager.toggleGrouping(for: device)
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: device.status.isGrouped ? "link" : "plus.square.dashed")
+                            .font(.system(size: 8))
+                        Text(device.status.isGrouped ? "UNLINK" : "LINK")
+                            .font(.system(size: 8, weight: .bold))
+                    }
+                    .foregroundStyle(device.status.isGrouped ? .white : accentColor)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(device.status.isGrouped ? accentColor.opacity(0.4) : Color.white.opacity(0.05))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
                 
                 // Model Badge (Static)
                 Text(device.model)
@@ -137,10 +167,20 @@ struct DeviceCardView: View {
                 .background {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(LinearGradient(
-                            colors: [accentColor.opacity(0.08), accentColor.opacity(0.02)],
+                            colors: [
+                                device.status.isGrouped ? accentColor.opacity(0.15) : accentColor.opacity(0.08),
+                                accentColor.opacity(0.02)
+                            ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
+                }
+                .overlay {
+                    if device.status.isGrouped {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(accentColor.opacity(0.3), lineWidth: 1)
+                            .blur(radius: 1)
+                    }
                 }
         }
         .overlay {
